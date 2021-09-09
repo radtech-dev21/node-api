@@ -66,8 +66,8 @@ app.get('/single/:id', function(req, res){
     });
 });
 
-//Add user
-app.post('/addUser', function(req, res){
+//Signup api
+app.post('/signup', function(req, res){
     let uname = req.body.uname;
     let email = req.body.email;
     let password = crypto.createHash('md5').update(req.body.password).digest('hex');
