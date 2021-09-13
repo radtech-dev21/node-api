@@ -4,6 +4,7 @@ const { check, validationResult } = require('express-validator');
 const cors = require("cors");
 const mysql = require("mysql");
 const crypto = require("crypto"); // for converting password into md5
+const jwt = require("jsonwebtoken");
 
 const app = express(); // to make sure that we have started the server with this app
 
@@ -141,9 +142,18 @@ app.post('/login', [
         let password = crypto.createHash('md5').update(req.body.password).digest('hex');
         conn.query('Select * from users where email=? and password=?', [email, password], function (error, result, fields) {
             if (result.length > 0) {
+                const token = jwt.sign(
+                    {email : email},
+                    'secretkey',
+                    {
+                      expiresIn: "2h",
+                    }
+                  );
                 return res.status(200).send({
                     status: 200,
-                    message: 'Login successful'
+                    message: 'Login successful',
+                    token : token,
+                    data : result[0]
                 });
             } else {
                 return res.status(404).send({
