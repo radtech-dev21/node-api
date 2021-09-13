@@ -1,6 +1,13 @@
 const express = require("express"); // to ensure that we have started server from node js
 const bodyParser = require("body-parser");
 const { check, validationResult } = require('express-validator');
+const myValidationResult = validationResult.withDefaults({
+    formatter: error => {
+      return {
+          msg: error.msg
+      };
+    },
+  });
 const cors = require("cors");
 const mysql = require("mysql");
 const crypto = require("crypto"); // for converting password into md5
@@ -92,9 +99,15 @@ app.post('/signup', [
         }
       })
 ], function (req, res) {
-    const errors = validationResult(req);
+    const errors = myValidationResult(req);
+    
     if (!errors.isEmpty()) {
-        return res.status(422).jsonp(errors.array());
+        return res.status(400).jsonp({
+            status : 400,
+            "message": "Validation errors in your request",
+            bodyValidationErrors: errors.array({ onlyFirstError: true })
+        });
+        
     } else {
         let uname = req.body.uname;
         let email = req.body.email;
@@ -132,11 +145,17 @@ app.post('/login', [
     check('password')
         .exists()
         .withMessage('Password is required')
+        .isLength({ min: 5 })
+        .withMessage('Password must be at least 5 chars long')
 ], function (req, res) {
 
-    const errors = validationResult(req);
+    const errors = myValidationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).jsonp(errors.array());
+        return res.status(400).jsonp({
+            status : 400,
+            "message": "Validation errors in your request",
+            bodyValidationErrors: errors.array({ onlyFirstError: true })
+        });
     } else {
         let email = req.body.email;
         let password = crypto.createHash('md5').update(req.body.password).digest('hex');
