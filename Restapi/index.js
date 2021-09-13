@@ -104,8 +104,8 @@ app.post('/signup', [
     if (!errors.isEmpty()) {
         return res.status(400).jsonp({
             status : 400,
-            "message": "Validation errors in your request",
-            bodyValidationErrors: errors.array({ onlyFirstError: true })
+            message: "Validation errors in your request",
+            errors: errors.array({ onlyFirstError: true })
         });
         
     } else {
@@ -153,8 +153,8 @@ app.post('/login', [
     if (!errors.isEmpty()) {
         return res.status(400).jsonp({
             status : 400,
-            "message": "Validation errors in your request",
-            bodyValidationErrors: errors.array({ onlyFirstError: true })
+            message: "Validation errors in your request",
+            errors: errors.array({ onlyFirstError: true })
         });
     } else {
         let email = req.body.email;
