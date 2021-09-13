@@ -4,7 +4,7 @@ const { check, validationResult } = require('express-validator');
 const myValidationResult = validationResult.withDefaults({
     formatter: error => {
       return {
-          msg: error.msg
+          message : error.msg
       };
     },
   });
