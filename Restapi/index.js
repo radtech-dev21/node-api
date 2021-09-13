@@ -1,8 +1,9 @@
 const express = require("express"); // to ensure that we have started server from node js
 const bodyParser = require("body-parser");
+const { check, validationResult } = require('express-validator');
 const cors = require("cors");
 const mysql = require("mysql");
-const crypto = require("crypto");
+const crypto = require("crypto"); // for converting password into md5
 
 const app = express(); // to make sure that we have started the server with this app
 
@@ -13,96 +14,145 @@ const conn = mysql.createConnection({
     database: 'user_management'
 });
 
-conn.connect(function(error){
-    if(error) throw error;
+conn.connect(function (error) {
+    if (error) throw error;
     //console.log('database connected');
 });
 
-app.listen(4000, function(){
+app.listen(4000, function () {
     console.log('Server listening on port : 4000');
 });
 
 app.use(bodyParser.json());
-app.use(cors());
 app.use(bodyParser.urlencoded({
-    extended : true
+    extended: true
 }));
+app.use(cors());
 
-app.get('/', function(req, res){
+app.get('/', function (req, res) {
     return res.send({
-        error : false,
-        message : 'hello this is priyanka'
+        error: false,
+        message: 'hello this is priyanka'
     });
 });
 
-//Fetch all users
-app.get('/users', function(req, res){
-    conn.query('Select * from users', function(error, results){
-        if(error) throw error;
+//Fetch all records
+app.get('/allrecords', function (req, res) {
+    conn.query('Select * from users', function (error, results) {
+        if (error) throw error;
         return res.send({
-            error : false,
-            data : results,
-            message : 'user list'
+            error: false,
+            data: results,
+            message: 'user list'
         });
     });
 });
 
-//Fetch user by id
-app.get('/single/:id', function(req, res){
+//Fetch record by id
+app.get('/single/:id', function (req, res) {
     let id = req.params.id;
-    if(!id){
+    if (!id) {
         return res.status(400).send({
-            error : true,
-            message : 'Id is required'
+            error: true,
+            message: 'Id is required'
         });
     }
-    conn.query('Select * from users where id=?', id, function(error, results, fields){
-        if(error) throw error;
+    conn.query('Select * from users where id=?', id, function (error, results, fields) {
+        if (error) throw error;
         return res.status(200).send({
-            error : false,
-            data : results,
-            message : 'single user'
+            error: false,
+            data: results,
+            message: 'single user'
         });
     });
 });
 
 //Signup api
-app.post('/signup', function(req, res){
-    let uname = req.body.uname;
-    let email = req.body.email;
-    let password = crypto.createHash('md5').update(req.body.password).digest('hex');
-    let cpassword = crypto.createHash('md5').update(req.body.cpassword).digest('hex');
-    if(!uname && !email && !password && !cpassword){
-        return res.status(400).send({
-            error : true,
-            message : 'Please provide all the information'
-        });
-    }
+app.post('/signup', [
+    check('uname')
+          .exists()
+          .withMessage('Username is required')
+          .isLength({ min: 3 })
+          .withMessage('Username must be at least 3 chars long')
+          .matches(/^[A-Za-z\s]+$/)
+          .withMessage('Username must be alphabetic'),
+    check('email', 'Email required in valid format')
+        .isEmail(),
+    check('password')
+        .isLength({ min: 5 })
+        .withMessage('Password must be at least 5 chars long'),
+    check('cpassword')
+    .isLength({ min: 5 })
+    .withMessage('Confirm Password must be at least 5 chars long')
+    .custom(async (cpassword, {req}) => {
+        const password = req.body.password
+        if(password !== cpassword){
+          throw new Error('Confirm Password must be same as Password')
+        }
+      })
+], function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).jsonp(errors.array());
+    } else {
+        let uname = req.body.uname;
+        let email = req.body.email;
+        let password = crypto.createHash('md5').update(req.body.password).digest('hex');
+        let cpassword = crypto.createHash('md5').update(req.body.cpassword).digest('hex');
+        conn.query('Select * from users where email=?', email, function (error, results, fields) {
+            if (error) {
+                console.log(error);
+            } else {
+                if (results && !results.length) {
+                    conn.query('INSERT into users(name, email, password) value(?, ?, ?)', [uname, email, password], function (error, results, fields) {
 
-    conn.query('Select * from users where email=?', email, function(error, results, fields){
-        if(error){
-            console.log(error);
-        }else{
-            if (results && !results.length) {
-                conn.query('INSERT into users(name, email, password) value(?, ?, ?)', [uname, email, password], function(error, results, fields){
-                
                         return res.status(200).send({
-                            error : false,
-                            data : results,
-                            message : 'Record has been added'
+                            status: 200,
+                            data: results,
+                            message: 'Record has been added'
                         });
                     });
-                }else{
-                    return res.status(200).send({
-                        error : true,
-                        message : 'Record already exis'
+                } else {
+                    return res.status(404).send({
+                        error: 404,
+                        message: 'Record already exist'
                     });
                 }
-        }
-        
-    });
+            }
 
-    
+        });
+    }
+});
+
+//Login api 
+app.post('/login', [
+    check('email', 'Email required in valid format')
+        .isEmail(),
+    check('password')
+        .exists()
+        .withMessage('Password is required')
+], function (req, res) {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).jsonp(errors.array());
+    } else {
+        let email = req.body.email;
+        let password = crypto.createHash('md5').update(req.body.password).digest('hex');
+        conn.query('Select * from users where email=? and password=?', [email, password], function (error, result, fields) {
+            if (result.length > 0) {
+                return res.status(200).send({
+                    status: 200,
+                    message: 'Login successful'
+                });
+            } else {
+                return res.status(404).send({
+                    status: 404,
+                    message: 'Invalid Email ID or Password'
+                })
+            }
+        });
+    }
 });
 
 module.exports = app;
