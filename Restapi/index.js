@@ -5,7 +5,8 @@ const mysql = require("mysql");
 const crypto = require("crypto"); // for converting password into md5
 const jwt = require("jsonwebtoken");
 const app = express(); // to make sure that we have started the server with this app
-
+require("dotenv").config();
+const auth = require("./middleware/auth");
 //Code for validation initialization starts
 const Validator = require('validatorjs');
 const validator = (body, rules, customMessages, callback) => {
@@ -65,7 +66,14 @@ app.post('/signup', function (req, res, next) {
                 } else {
                     if (results && !results.length) {
                         conn.query('INSERT into users(name, email, password) value(?, ?, ?)', [uname, email, password], function (error, results, fields) {
-
+                            const token = jwt.sign(
+                                { email: email },
+                                process.env.TOKEN_KEY,
+                                {
+                                    expiresIn: "2h",
+                                }
+                            );
+                            conn.query('UPDATE users SET access_token = ? WHERE email = ?', [token, email]);
                             return res.status(200).send({
                                 code: 200,
                                 error: false,
@@ -108,19 +116,18 @@ app.post('/login', function (req, res, next) {
             let password = crypto.createHash('md5').update(req.body.password).digest('hex');
             const token = jwt.sign(
                 { email: email },
-                'secretkey',
+                process.env.TOKEN_KEY,
                 {
                     expiresIn: "2h",
                 }
             );
+            conn.query('UPDATE users SET access_token = ? WHERE email = ?', [token, email]);
             conn.query('Select * from users where email=? and password=?', [email, password], function (error, result, fields) {
                 if (result.length > 0) {
-                    conn.query('UPDATE users SET login_token = ? WHERE email = ?', [token, email]);
                     return res.status(200).send({
                         code: 200,
                         error: false,
                         message: 'Login successful',
-                        token: token,
                         data: result[0]
                     });
                 } else {
@@ -134,5 +141,6 @@ app.post('/login', function (req, res, next) {
         }
     });
 });
+
 
 module.exports = app;
