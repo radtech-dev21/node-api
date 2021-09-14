@@ -5,13 +5,15 @@ const mysql = require("mysql");
 const crypto = require("crypto"); // for converting password into md5
 const jwt = require("jsonwebtoken");
 const app = express(); // to make sure that we have started the server with this app
+
+//Code for validation initialization starts
 const Validator = require('validatorjs');
 const validator = (body, rules, customMessages, callback) => {
     const validation = new Validator(body, rules, customMessages);
     validation.passes(() => callback(null, true));
     validation.fails(() => callback(validation.errors, false));
 };
-
+//Code for validation initialization ends
 
 const conn = mysql.createConnection({
     host: 'localhost',
@@ -106,15 +108,16 @@ app.post('/login', function (req, res, next) {
         } else {
             let email = req.body.email;
             let password = crypto.createHash('md5').update(req.body.password).digest('hex');
+            const token = jwt.sign(
+                { email: email },
+                'secretkey',
+                {
+                    expiresIn: "2h",
+                }
+            );
             conn.query('Select * from users where email=? and password=?', [email, password], function (error, result, fields) {
                 if (result.length > 0) {
-                    const token = jwt.sign(
-                        { email: email },
-                        'secretkey',
-                        {
-                            expiresIn: "2h",
-                        }
-                    );
+                    conn.query('UPDATE users SET login_token = ? WHERE email = ?', [token, email]);
                     return res.status(200).send({
                         code: 200,
                         error: false,
