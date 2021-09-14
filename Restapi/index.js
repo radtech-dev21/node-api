@@ -69,14 +69,14 @@ app.post('/signup', function (req, res, next) {
                             return res.status(200).send({
                                 code: 200,
                                 error: false,
-                                message: 'Record has been added'
+                                message: 'User successfully registered'
                             });
                         });
                     } else {
                         return res.status(404).send({
                             code: 404,
                             error: true,
-                            message: 'Record already exist'
+                            message: 'User already exist'
                         });
                     }
                 }
