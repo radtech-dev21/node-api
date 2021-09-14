@@ -67,7 +67,7 @@ app.post('/signup', function (req, res, next) {
                     if (results && !results.length) {
                         conn.query('INSERT into users(name, email, password) value(?, ?, ?)', [uname, email, password], function (error, results, fields) {
                             const token = jwt.sign(
-                                { email: email },
+                                {id: results.insertId, email: email },
                                 process.env.TOKEN_KEY,
                                 {
                                     expiresIn: "2h",
@@ -114,16 +114,16 @@ app.post('/login', function (req, res, next) {
         } else {
             let email = req.body.email;
             let password = crypto.createHash('md5').update(req.body.password).digest('hex');
-            const token = jwt.sign(
-                { email: email },
-                process.env.TOKEN_KEY,
-                {
-                    expiresIn: "2h",
-                }
-            );
-            conn.query('UPDATE users SET access_token = ? WHERE email = ?', [token, email]);
             conn.query('Select * from users where email=? and password=?', [email, password], function (error, result, fields) {
                 if (result.length > 0) {
+                    const token = jwt.sign(
+                        {id: result[0].id, email: email },
+                        process.env.TOKEN_KEY,
+                        {
+                            expiresIn: "2h",
+                        }
+                    );
+                    conn.query('UPDATE users SET access_token = ? WHERE email = ?', [token, email]);
                     return res.status(200).send({
                         code: 200,
                         error: false,
@@ -142,5 +142,28 @@ app.post('/login', function (req, res, next) {
     });
 });
 
+//Dashboard Api
+app.get("/dashboard", auth, (req, res) => {
+  var token = req.headers['access_token'];
+  jwt.verify(token, process.env.TOKEN_KEY, function(err, decoded) {
+    var email = decoded.email;
+    conn.query('Select * from users where email=?', [email], function (error, result, fields) {
+        if (result.length > 0) {
+            return res.status(200).send({
+                code: 200,
+                error: false,
+                message: 'User Details',
+                data: result[0]
+            });
+        } else {
+            return res.status(422).send({
+                code: 422,
+                error: true,
+                message: 'No data exist'
+            })
+        }
+    });
+  });
+});
 
 module.exports = app;
