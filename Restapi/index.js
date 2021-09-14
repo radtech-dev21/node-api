@@ -67,7 +67,7 @@ app.post('/signup', function (req, res, next) {
                     if (results && !results.length) {
                         conn.query('INSERT into users(name, email, password) value(?, ?, ?)', [uname, email, password], function (error, results, fields) {
                             const token = jwt.sign(
-                                {id: results.insertId, email: email },
+                                { id: results.insertId, email: email },
                                 process.env.TOKEN_KEY,
                                 {
                                     expiresIn: "2h",
@@ -117,7 +117,7 @@ app.post('/login', function (req, res, next) {
             conn.query('Select * from users where email=? and password=?', [email, password], function (error, result, fields) {
                 if (result.length > 0) {
                     const token = jwt.sign(
-                        {id: result[0].id, email: email },
+                        { id: result[0].id, email: email },
                         process.env.TOKEN_KEY,
                         {
                             expiresIn: "2h",
@@ -144,10 +144,8 @@ app.post('/login', function (req, res, next) {
 
 //Dashboard Api
 app.get("/dashboard", auth, (req, res) => {
-  var token = req.headers['access_token'];
-  jwt.verify(token, process.env.TOKEN_KEY, function(err, decoded) {
-    var email = decoded.email;
-    conn.query('Select * from users where email=?', [email], function (error, result, fields) {
+    var userID = req.user.id;
+    conn.query('Select * from users where id=?', [userID], function (error, result, fields) {
         if (result.length > 0) {
             return res.status(200).send({
                 code: 200,
@@ -163,7 +161,6 @@ app.get("/dashboard", auth, (req, res) => {
             })
         }
     });
-  });
 });
 
 module.exports = app;
