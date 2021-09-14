@@ -40,10 +40,10 @@ app.use(cors());
 //Signup Api
 app.post('/signup', function (req, res, next) {
     const validationRule = {
-        "uname": "required|string",
+        "uname": "required|string|alpha",
         "email": "required|email",
-        "password": "required|string|min:6",
-        "cpassword": "required|string|min:6",
+        "password": "required|string|min:6|confirmed",
+        "password_confirmation": "required|string|min:6",
     }
 
     validator(req.body, validationRule, {}, (err, status) => {
@@ -59,7 +59,6 @@ app.post('/signup', function (req, res, next) {
             let uname = req.body.uname;
             let email = req.body.email;
             let password = crypto.createHash('md5').update(req.body.password).digest('hex');
-            let cpassword = crypto.createHash('md5').update(req.body.cpassword).digest('hex');
             conn.query('Select * from users where email=?', email, function (error, results, fields) {
                 if (error) {
                     console.log(error);
@@ -101,7 +100,7 @@ app.post('/login', function (req, res, next) {
             res.status(422)
                 .send({
                     code: 422,
-                    success: false,
+                    error: true,
                     message: 'Validation errors in your request',
                     data: err
                 });
