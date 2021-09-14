@@ -9,6 +9,7 @@
   "author": "priyanka",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "body-parse": "^0.1.0",
     "cors": "^2.8.5",
     "ejs": "^3.1.6",

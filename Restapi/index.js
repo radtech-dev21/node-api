@@ -69,7 +69,6 @@ app.post('/signup', function (req, res, next) {
                             return res.status(200).send({
                                 code: 200,
                                 error: false,
-                                data: results,
                                 message: 'Record has been added'
                             });
                         });
