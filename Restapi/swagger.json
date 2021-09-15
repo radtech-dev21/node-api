@@ -1,0 +1,52 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "version": "1.0.0", 
+      "title": "User Authentication",
+      "description": "User Authentication",
+      "license": {
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+      }
+    },
+    "host": "localhost:4000",
+    "basePath": "/",
+    "schemes": ["http"],
+    "consumes": ["application/json"],
+    "produces": ["application/json"],
+    "paths": {
+        "/signup": {
+          "post": {
+            "summary": "To register user",
+            "responses": {
+              "200": {
+                "description": "OK",
+                "schema": {
+                  "$ref": "#/definitions/Signup"
+                }
+              }
+            }
+          }
+        }
+      },
+      "definitions": {
+        "Signup": {
+          "required": ["uname", "email", "password", "password_confirmation"],
+          "properties": {
+            "uname": {
+            },
+            "email": {
+            },
+            "password": {
+            },
+            "password_confirmation": {
+            }
+          }
+        }
+        
+      }
+      }
+    
+  
+
+  

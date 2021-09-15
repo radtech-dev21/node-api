@@ -16,6 +16,11 @@ const validator = (body, rules, customMessages, callback) => {
 };
 //Code for validation initialization ends
 
+
+const swaggerUi = require('swagger-ui-express'),
+swaggerDocument = require('./swagger.json');
+
+
 const conn = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -28,6 +33,12 @@ conn.connect(function (error) {
     //console.log('database connected');
 });
 
+app.use(
+    '/api-docs',
+    swaggerUi.serve, 
+    swaggerUi.setup(swaggerDocument)
+  );
+
 app.listen(4000, function () {
     console.log('Server listening on port : 4000');
 });
@@ -37,6 +48,9 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 app.use(cors());
+
+
+
 
 //Signup Api
 app.post('/signup', function (req, res, next) {
@@ -144,7 +158,7 @@ app.post('/login', function (req, res, next) {
 
 //Dashboard Api
 app.get("/dashboard", auth, (req, res) => {
-    var userID = req.user.id;
+    var userID = req.user.id; //fetched id from response return by auth.js after verification
     conn.query('Select * from users where id=?', [userID], function (error, result, fields) {
         if (result.length > 0) {
             return res.status(200).send({
