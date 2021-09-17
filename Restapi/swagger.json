@@ -15,35 +15,44 @@
     "consumes": ["application/json"],
     "produces": ["application/json"],
     "paths": {
-        "/signup": {
+        "http://localhost:4000/signup": {
+                "parameters": [
+                {
+                        "name": "uname",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the user",
+                        "type": "string"
+                },
+                {
+                        "name": "email",
+                        "in": "path",
+                        "required": true,
+                        "description": "Email of the user",
+                        "type": "string"
+                },
+                {
+                        "name": "password",
+                        "in": "path",
+                        "required": true,
+                        "description": "Password of the user",
+                        "type": "string"
+                },
+                {
+                        "name": "password_confirmation",
+                        "in": "path",
+                        "required": true,
+                        "description": "Confirm Password of the user",
+                        "type": "string"
+                }
+                ],
           "post": {
             "summary": "To register user",
             "responses": {
-              "200": {
-                "description": "OK",
-                "schema": {
-                  "$ref": "#/definitions/Signup"
-                }
-              }
+                "$ref": "/signup"
             }
           }
         }
-      },
-      "definitions": {
-        "Signup": {
-          "required": ["uname", "email", "password", "password_confirmation"],
-          "properties": {
-            "uname": {
-            },
-            "email": {
-            },
-            "password": {
-            },
-            "password_confirmation": {
-            }
-          }
-        }
-        
       }
       }
     
